@@ -10,11 +10,11 @@ ENTITY_MAP = [
     ('product', 'products')
 ]
 
-
 class CrunchBase(object):
     """
     Access the CrunchBase API.
     """
+    DEBUG = False
     def __init__(self, api_key):
         self.api_str = "api_key=%s" % api_key
 
@@ -24,7 +24,8 @@ class CrunchBase(object):
         """
         qual_string = '' if not qualifiers else '&' + urllib.urlencode(qualifiers)
         url = 'http://%s.crunchbase.com/v/%s/%s?%s%s' % (base, version, filename, self.api_str, qual_string)
-        print url
+        if self.DEBUG:
+            print url
         resource = urllib2.urlopen(url)
         try:
             return json.loads(resource.read())
@@ -84,7 +85,6 @@ class CrunchBase(object):
         Call the api and return all details.
         """
         ret = self.entity(namespace=crunch_entity.namespace, permalink=crunch_entity.permalink)
-        print "%s" % ret
         return crunch_entity.__class__(ret)
 
 
@@ -203,7 +203,6 @@ class Company(CrunchEntity):
             elif k == 'funding_rounds':
                 self.funding_rounds = []
                 for round in v:
-                    print "new round"
                     self.funding_rounds.append(FundingRound(round))
             else:
                 setattr(self, k, v)
@@ -233,12 +232,9 @@ class FundingRound(object):
             if k.startswith('funded_'):
                 funded_dict[k.split('funded_')[1]] = v
             elif k == 'investments':
-                print 'a'
                 self.investments = []
                 for investment in v:
-                    print 'b'
                     self.investments.extend(investor(investment))
-                    print "inv length %s" % len(self.investments)
             else:
                 setattr(self, k, v)
         try:
@@ -247,7 +243,6 @@ class FundingRound(object):
             self.funded_date = datetime.date(**funded_dict)
         except:
             pass
-        print self
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, self.desc())
@@ -268,7 +263,6 @@ def investor(investment):
         ext.append(Company(c))
     if f:
         ext.append(FinancialOrg(f))
-    print 'len %s' % len(ext)
     return ext
 
 
